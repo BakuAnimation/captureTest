@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+    <title>Video experiments</title>
+    <style>
+      #videoElement {
+        width: 500px;
+        height: 375px;
+        background-color: #666;
+      }
+      #gallery {
+        margin-top: 100px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="container">
+      <video autoplay="true" id="videoElement"></video>
+      <button id="takePicture">Take a picture</button>
+      <button id="playVideo">Play video</button>
+      fps:
+      <input id="fps" type="text" value="12">
+      <canvas id="videoRenderer"></canvas>
+    </div>
+
+    <div id="gallery">
+    </div>
+
+
+    <script>
+      var streaming = false;
+      var webcamVideo = document.querySelector("#videoElement");
+      var videoRenderer = document.querySelector("#videoRenderer");
+
+      var gallery = document.querySelector('#gallery');
+      var takePicture  = document.querySelector('#takePicture');
+      var playVideo  = document.querySelector('#playVideo');
+      // var canvas = document.querySelector('#canvas');
+
+      if (navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: true })
+          .then(function (stream) {
+            webcamVideo.srcObject = stream;
+          })
+          .catch(function (err0r) {
+            console.log("Something went wrong!");
+          });
+      }
+
+      function takepicture() {
+        var canvas = document.createElement("canvas")
+        canvas.setAttribute('width', webcamVideo.offsetWidth);
+        canvas.setAttribute('height', webcamVideo.offsetHeight);
+        canvas.getContext('2d').drawImage(webcamVideo, 0, 0);
+        gallery.appendChild(canvas);
+      }
+
+      var then = Date.now();
+      var canvasIndex = 0
+      function playvideo() {
+        requestAnimationFrame(playvideo);
+
+        var fps = document.querySelector('#fps').value;
+        var interval = 1000/fps;
+
+        now = Date.now();
+        delta = now - then;
+
+        if (delta > interval) {
+            then = now - (delta % interval);
+
+            var allCanvas = document.querySelectorAll('#gallery>canvas');
+
+            const currCanvas = allCanvas[canvasIndex];
+            videoRenderer.getContext('2d').drawImage(currCanvas, 0, 0);
+            canvasIndex = (canvasIndex + 1) % (allCanvas.length)
+        }
+      }
+
+      // button events
+      takePicture.addEventListener('click', function(ev){
+          takepicture();
+        ev.preventDefault();
+      }, false);
+      playVideo.addEventListener('click', function(ev){
+        videoRenderer.setAttribute('width', webcamVideo.offsetWidth);
+        videoRenderer.setAttribute('height', webcamVideo.offsetHeight);
+
+        playvideo();
+        ev.preventDefault();
+      }, false);
+
+    </script>
+
+  </body>
+</html>
